@@ -1,18 +1,29 @@
 import random
 import json
 import logging
-from flask import Flask, request, jsonify
+from flask import request
 
-# Initialize the Flask app
-app = Flask(__name__)
+from routes import app
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+@app.route("/wordle-game", methods=["POST"])
+def evaluate():
+    data = request.get_json()
+    logging.info("data sent for evaluation {}".format(data))
+    guess_history = data.get("guessHistory", [])
+    evaluation_history = data.get("evaluationHistory", [])
+    logging.info("Guess history: {}".format(guess_history))
+    logging.info("Evaluation history: {}".format(evaluation_history))
+    next_guess = suggest_next_guess(guess_history, evaluation_history)
+    logging.info("My result (next guess): {}".format(next_guess))
+    return json.dumps({"guessHistory": next_guess})
+
 
 # Load a list of valid 5-letter words
 with open("word_list.txt") as f:
-    WORD_LIST = [word.strip()
-                 for word in f.readlines() if len(word.strip()) == 5]
+    WORD_LIST = [word.strip() for word in f.readlines() if len(word.strip()) == 5]
 
 # Function to filter words based on feedback
 
@@ -38,6 +49,7 @@ def filter_words(word_list, guess_history, evaluation_history):
 
     return filtered_words
 
+
 # Function to suggest the next best guess
 
 
@@ -51,35 +63,3 @@ def suggest_next_guess(guess_history, evaluation_history):
 
     # Randomly select from the remaining valid words
     return random.choice(possible_words) if possible_words else None
-
-# Define the /square route for evaluation
-
-
-@app.route('/wordle-game', methods=['POST'])
-def evaluate():
-    # Get the data from the request
-    data = request.get_json()
-
-    logging.info("data sent for evaluation {}".format(data))
-
-    # Extract guessHistory and evaluationHistory
-    guess_history = data.get("guessHistory", [])
-    evaluation_history = data.get("evaluationHistory", [])
-
-    # Log guess history and evaluation history for debugging
-    logging.info("Guess history: {}".format(guess_history))
-    logging.info("Evaluation history: {}".format(evaluation_history))
-
-    # Suggest the next guess
-    next_guess = suggest_next_guess(guess_history, evaluation_history)
-
-    # Log the result
-    logging.info("My result (next guess): {}".format(next_guess))
-
-    # Return the next guess as a JSON response
-    return json.dumps({"guess": next_guess})
-
-
-# Running the server
-if __name__ == '__main__':
-    app.run(debug=True)
