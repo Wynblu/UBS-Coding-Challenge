@@ -1,9 +1,10 @@
 import random
 import json
 import logging
-from flask import request
+from flask import Flask, request, jsonify
 
-from routes import app
+# Initialize the Flask app
+app = Flask(__name__)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
