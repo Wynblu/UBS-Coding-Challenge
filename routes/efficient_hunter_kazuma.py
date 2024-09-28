@@ -1,59 +1,68 @@
-from flask import jsonify
-import logging
-import json
-from flask import request
+# import logging
+# import json
 
-from routes import app
+# from flask import request
 
-# Function to calculate efficiency
+# from routes import app
 
 
-def calculate_efficiency(monster_counts):
+# @app.route("/efficient-hunter-kazuma", methods=["POST"])
+# def efficient_hunter_kazuma():
+#     data = request.get_json()
+#     logging.info(f"Data received for evaluation: {data}")
+#     result = []
+#     for entry in data:
+#         monsters = entry["monsters"]
+#         efficiency = calculate_efficiency(monsters)
+#         result.append({"efficiency": efficiency})
+
+#     # Return the result as a JSON response
+#     logging.info("My result :{}".format(result))
+#     return json.dumps(result)
+
+
+# def calculate_efficiency(monsters):
+
+#     pass
+
+
+def calculate_efficiency(monsters):
+    # initialise efficiency
     efficiency = 0
-    n = len(monster_counts)
+    # set num of battles
+    n = len(monsters)
+    # set max num of attacks possible
+    max_atk = round(n / 3)
+    
+    monsters_copy = monsters.copy()
+    monsters_copy.sort()
+    lowest = monsters_copy[:max_atk]
+    highest = monsters_copy[-max_atk:]
+    print(lowest)
+    print(highest)
+
+    if n == 1:
+        return efficiency
+
     i = 0
-
     while i < n:
-        if monster_counts[i] > 0:
-            # Prepare transmutation circle at time tX
-            circle_cost = monster_counts[i]
-            total_monsters_defeated = 0
-
-            # Find the best time to attack (Kazuma can wait)
-            # Check for the next non-zero time slot to attack
-            while i < n and monster_counts[i] > 0:
-                total_monsters_defeated += monster_counts[i]
-                i += 1
-
-            # Earnings are the total monsters defeated minus the cost to prepare the circle
-            efficiency += (total_monsters_defeated - circle_cost)
+        print(i)
+        count = monsters[i]
+        if count in lowest:
+            efficiency -= count
+            lowest.remove(count)
+            i += 1
+        elif count == max(highest):
+            efficiency += count
+            highest.remove(count)
+            i += 2
         else:
             i += 1
 
-    return max(efficiency, 0)  # Efficiency can't be negative
+    print(lowest)
+    print(highest)
 
-# Route to expose the POST endpoint for verification
+    return efficiency
 
-
-@app.route('/efficient-hunter-kazuma', methods=['POST'])
-def efficient_hunter_kazuma():
-    # Parse the incoming request data
-    data = request.get_json()
-    logging.info(f"Data received for evaluation: {data}")
-
-    result = []
-
-    # Loop over all sets of monster counts in the input
-    for entry in data:
-        monsters = entry["monsters"]
-        efficiency = calculate_efficiency(monsters)
-        result.append({"efficiency": efficiency})
-
-    # Return the result as a JSON response
-    logging.info(f"Result sent: {result}")
-    return jsonify(result)
-
-
-# Running the Flask app
-if __name__ == "__main__":
-    app.run(debug=True)
+monsters = [1,100,340,210,1,4,530]
+print(calculate_efficiency(monsters))
