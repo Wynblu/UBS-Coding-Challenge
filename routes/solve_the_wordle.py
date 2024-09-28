@@ -7,25 +7,8 @@ from routes import app
 
 logger = logging.getLogger(__name__)
 
-
-@app.route("/wordle-game", methods=["POST"])
-def evaluate_wordle():
-    data = request.get_json()
-    logging.info("data sent for evaluation {}".format(data))
-    guess_history = data.get("guessHistory", [])
-    evaluation_history = data.get("evaluationHistory", [])
-    logging.info("Guess history: {}".format(guess_history))
-    logging.info("Evaluation history: {}".format(evaluation_history))
-    next_guess = suggest_next_guess(guess_history, evaluation_history)
-    logging.info("My result (next guess): {}".format(next_guess))
-    return json.dumps({"guessHistory": next_guess})
-
-
-# Load a list of valid 5-letter words
-# with open("word_list.txt") as f:
-#     WORD_LIST = [word.strip() for word in f.readlines() if len(word.strip()) == 5]
-
-# Function to filter words based on feedback
+with open("word_list.txt") as f:
+    WORD_LIST = [word.strip() for word in f.readlines() if len(word.strip()) == 5]
 
 
 def filter_words(word_list, guess_history, evaluation_history):
@@ -63,3 +46,15 @@ def suggest_next_guess(guess_history, evaluation_history):
 
     # Randomly select from the remaining valid words
     return random.choice(possible_words) if possible_words else None
+
+@app.route("/wordle-game", methods=["POST"])
+def evaluate_wordle():
+    data = request.get_json()
+    logging.info("data sent for evaluation {}".format(data))
+    guess_history = data.get("guessHistory", [])
+    evaluation_history = data.get("evaluationHistory", [])
+    logging.info("Guess history: {}".format(guess_history))
+    logging.info("Evaluation history: {}".format(evaluation_history))
+    next_guess = suggest_next_guess(guess_history, evaluation_history)
+    logging.info("My result (next guess): {}".format(next_guess))
+    return json.dumps({"guessHistory": next_guess})
