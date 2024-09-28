@@ -1,7 +1,7 @@
 from routes import app
 import logging
 import socket
-from routes.Kazuma import efficient-hunter-kazuma
+from routes.Kazuma import kazuma
 
 logger = logging.getLogger(__name__)
 
