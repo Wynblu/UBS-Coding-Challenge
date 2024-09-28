@@ -9,3 +9,4 @@ import routes.bugfixer2
 import routes.klotski
 import routes.clumsy
 import routes.kazuma
+import routes.digital_colony
