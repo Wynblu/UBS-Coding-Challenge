@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 @app.route("/wordle-game", methods=["POST"])
-def evaluate():
+def evaluate_wordle():
     data = request.get_json()
     logging.info("data sent for evaluation {}".format(data))
     guess_history = data.get("guessHistory", [])
@@ -22,8 +22,8 @@ def evaluate():
 
 
 # Load a list of valid 5-letter words
-with open("word_list.txt") as f:
-    WORD_LIST = [word.strip() for word in f.readlines() if len(word.strip()) == 5]
+# with open("word_list.txt") as f:
+#     WORD_LIST = [word.strip() for word in f.readlines() if len(word.strip()) == 5]
 
 # Function to filter words based on feedback
 
