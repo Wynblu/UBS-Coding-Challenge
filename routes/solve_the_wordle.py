@@ -1,19 +1,18 @@
 import random
-import json
-import logging
-from flask import request
-
+from flask import Flask, request, jsonify
 from routes import app
 
-logger = logging.getLogger(__name__)
+# Initialize the Flask app
+app = Flask(__name__)
 
+# Load a list of valid 5-letter words (you can use a public word list or your own)
 with open("word_list.txt") as f:
     WORD_LIST = [word.strip() for word in f.readlines() if len(word.strip()) == 5]
 
-
+# Function to filter words based on feedback
 def filter_words(word_list, guess_history, evaluation_history):
     filtered_words = word_list.copy()
-
+    
     for guess, feedback in zip(guess_history, evaluation_history):
         temp_filtered_words = []
         for word in filtered_words:
@@ -32,29 +31,31 @@ def filter_words(word_list, guess_history, evaluation_history):
 
     return filtered_words
 
-
-# Function to suggest the next best guess
-
-
 def suggest_next_guess(guess_history, evaluation_history):
     # First guess is always a good word like "slate" if no history
     if not guess_history:
         return "slate"
-
+    
     # Filter words based on previous feedback
     possible_words = filter_words(WORD_LIST, guess_history, evaluation_history)
-
+    
     # Randomly select from the remaining valid words
     return random.choice(possible_words) if possible_words else None
 
-@app.route("/wordle-game", methods=["POST"])
-def evaluate_wordle():
-    data = request.get_json()
-    logging.info("data sent for evaluation {}".format(data))
+# Define the /wordle-game POST endpoint
+@app.route('/wordle-game', methods=['POST'])
+def wordle_game():
+    data = request.json
+    
     guess_history = data.get("guessHistory", [])
     evaluation_history = data.get("evaluationHistory", [])
-    logging.info("Guess history: {}".format(guess_history))
-    logging.info("Evaluation history: {}".format(evaluation_history))
+    
+    # Suggest the next guess
     next_guess = suggest_next_guess(guess_history, evaluation_history)
-    logging.info("My result (next guess): {}".format(next_guess))
-    return json.dumps({"guessHistory": next_guess})
+    
+    # Respond with the next guess
+    return jsonify({"guess": next_guess})
+
+# Running the server
+if __name__ == '__main__':
+    app.run(debug=True)
