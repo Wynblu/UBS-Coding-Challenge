@@ -1,81 +1,91 @@
-from flask import jsonify
-import logging
-import json
-from flask import request
+from flask import Flask, request, jsonify
 
 from routes import app
 
-# Function to extract the block positions from the board string
+# translate the input string to a board
+def string_to_board(board_str):
+    return [list(board_str[i:i+4]) for i in range(0, 20, 4)]
 
+# translate the board back to string after shuffle
+def board_to_string(board):
+    return ''.join(''.join(row) for row in board)
 
-def get_block_positions(board):
-    positions = {}
-    for r in range(4):
-        for c in range(5):
-            block = board[r * 5 + c]
-            if block != '@':
-                if block not in positions:
-                    positions[block] = []
-                positions[block].append((r, c))
+# Find all coordinates occupied by a given letter block
+def find_block_positions(board, block):
+    positions = []
+    for r in range(5):
+        for c in range(4):
+            if board[r][c] == block:
+                positions.append((r, c))
     return positions
 
-# Function to create a new board from the block positions
+# check if space is open ('@') for the block to move
+def can_move(block_positions, direction, board):
+    if direction == 'N':
+        return all(r - 1 >= 0 and board[r - 1][c] == '@' for r, c in block_positions if r == min(row[0] for row in block_positions))
+    if direction == 'S':
+        return all(r + 1 < 5 and board[r + 1][c] == '@' for r, c in block_positions if r == max(row[0] for row in block_positions))
+    if direction == 'W':
+        return all(c - 1 >= 0 and board[r][c - 1] == '@' for r, c in block_positions if c == min(col[1] for col in block_positions))
+    if direction == 'E':
+        return all(c + 1 < 4 and board[r][c + 1] == '@' for r, c in block_positions if c == max(col[1] for col in block_positions))
+    return False
 
+# Move the block on the board in the specified direction
+def move_block(board, block, direction):
+    block_positions = find_block_positions(board, block)
+    # Don't move when it is invalid
+    if not can_move(block_positions, direction, board):
+        return board  
 
-def create_board(positions):
-    board = ['@'] * 20
-    for block, coords in positions.items():
-        for (r, c) in coords:
-            board[r * 5 + c] = block
-    return ''.join(board)
+    # replace old position with "@" 
+    for r, c in block_positions:
+        board[r][c] = '@'
 
-# Function to apply moves on the board
+    # Calculate new positions based on the direction
+    if direction == 'N':
+        new_positions = [(r - 1, c) for r, c in block_positions]
+    elif direction == 'S':
+        new_positions = [(r + 1, c) for r, c in block_positions]
+    elif direction == 'W':
+        new_positions = [(r, c - 1) for r, c in block_positions]
+    elif direction == 'E':
+        new_positions = [(r, c + 1) for r, c in block_positions]
 
+    # Place the letter block in new positions
+    for r, c in new_positions:
+        board[r][c] = block
 
-def apply_moves(board, moves):
-    positions = get_block_positions(board)
-    for i in range(0, len(moves), 2):
-        block = moves[i]
-        direction = moves[i + 1]
+    return board
 
-        # Get the current positions of the block
-        coords = positions[block]
-        if direction == 'N':
-            # Move up
-            new_coords = [(r - 1, c) for (r, c) in coords]
-        elif direction == 'S':
-            # Move down
-            new_coords = [(r + 1, c) for (r, c) in coords]
-        elif direction == 'E':
-            # Move right
-            new_coords = [(r, c + 1) for (r, c) in coords]
-        elif direction == 'W':
-            # Move left
-            new_coords = [(r, c - 1) for (r, c) in coords]
+# Apply moves in batches 
+def apply_moves(board_str, moves_str):
+    board = string_to_board(board_str)
 
-        # Update the positions
-        positions[block] = new_coords
+    # Group moves by block
+    i = 0
+    while i < len(moves_str):
+        block = moves_str[i]
+        direction = moves_str[i + 1]
+        board = move_block(board, block, direction)
+        i += 2  # Move to the next block move pair
 
-    # Create the final board after all moves
-    return create_board(positions)
+    return board_to_string(board)
 
-# POST endpoint for Klotski game
-
-
+# API endpoint to handle multiple board and move combinations
 @app.route('/klotski', methods=['POST'])
 def klotski():
     data = request.get_json()
-    results = []
+    result = []
+    
+    for task in data:
+        board_str = task["board"]
+        moves_str = task["moves"]
+        result_board = apply_moves(board_str, moves_str)
+        result.append(result_board)
+    
+    return jsonify(result)
 
-    for entry in data:
-        board = entry['board']
-        moves = entry['moves']
-        result_board = apply_moves(board, moves)
-        results.append(result_board)
-
-    return jsonify(results)
-
-
-# Running the Flask app
+# Run the Flask app
 if __name__ == "__main__":
     app.run(debug=True)
