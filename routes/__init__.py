@@ -7,3 +7,4 @@ import routes.efficient_hunter_kazuma
 import routes.bugfixer1
 import routes.bugfixer2
 import routes.klotski
+import routes.clumsy
