@@ -25,7 +25,6 @@ def filter_words(guess_history, eval_history):
 
     return possible_words
     
-    return possible_words
 
 def match_eval(w_letter, g_letter, symbol):
     if symbol == '-' and w_letter == g_letter:
