@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify
 from collections import defaultdict
 
 from routes import app
-
 def generate_mistyped_variants(word):
     """Generate all possible mistyped variants of the given word by changing one character."""
     letters = 'abcdefghijklmnopqrstuvwxyz'
@@ -39,7 +38,9 @@ def clumsy_programmer():
     data = request.json
     results = []
 
-    for case in data:
+    # Ensure we have 6 test cases
+    for i in range(6):
+        case = data[i] if i < len(data) else {}
         dictionary = case.get("dictionary", [])
         mistypes = case.get("mistypes", [])
         corrections = correct_mistypes(dictionary, mistypes)
