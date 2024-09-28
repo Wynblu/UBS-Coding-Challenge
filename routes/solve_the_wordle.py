@@ -2,10 +2,7 @@ import random
 from flask import Flask, request, jsonify
 from routes import app
 
-# Initialize the Flask app
-app = Flask(__name__)
-
-# Load a list of valid 5-letter words (you can use a public word list or your own)
+# Load a list of valid 5-letter words 
 with open("word_list.txt") as f:
     WORD_LIST = [word.strip() for word in f.readlines() if len(word.strip()) == 5]
 
@@ -31,6 +28,7 @@ def filter_words(word_list, guess_history, evaluation_history):
 
     return filtered_words
 
+# Function to suggest the next best guess
 def suggest_next_guess(guess_history, evaluation_history):
     # First guess is always a good word like "slate" if no history
     if not guess_history:
