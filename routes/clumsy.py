@@ -30,9 +30,3 @@ def fix_errors(dictionary, mistypes):
         else:
             corrected_words.append(word) 
     return corrected_words
-
-dictionary = ["purple", "rocket", "silver", "gadget", "window", "dragon"]
-mistypes = ["purqle", "gadgat", "socket", "salver"]
-corrected_words = fix_errors(dictionary, mistypes)
-
-print(corrected_words)
