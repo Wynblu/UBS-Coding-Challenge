@@ -1,84 +1,55 @@
-import random
-import json
-import logging
-from flask import request
-
+from flask import Flask, request, jsonify
 from routes import app
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+# Load a wordlist of 5 letter words
+def load_word_list():
+    with open('word_list.txt') as f:
+        return [word.strip() for word in f.readlines()]
+    
+# Get the word list initialised and have the first word guessed be slate
+word_list = load_word_list()
+initial_guess = "slate"
 
-# Load a list of valid 5-letter words
-with open("word_list.txt") as f:
-    WORD_LIST = [word.strip()
-                 for word in f.readlines() if len(word.strip()) == 5]
+# filter words based on feedback given
+def filter_words(guess_history, eval_history):
+    possible_words = word_list[:]
+    for guess, eval in zip(guess_history, eval_history):
+        if eval != "OOOOO":
+            possible_words.remove(guess)
+    for word, guess, eval in zip(possible_words, guess_history, eval_history):
+        for w_letter, g_letter, symbol in zip(word, guess, eval):
+            if symbol == '?':
+                continue
+            elif not match_eval(w_letter, g_letter, symbol):
+                possible_words.remove(word)
 
-# Function to filter words based on feedback
+    return possible_words
+    
+    return possible_words
 
-
-def filter_words(word_list, guess_history, evaluation_history):
-    filtered_words = word_list.copy()
-
-    for guess, feedback in zip(guess_history, evaluation_history):
-        temp_filtered_words = []
-        for word in filtered_words:
-            match = True
-            for i, symbol in enumerate(feedback):
-                if symbol == "O" and word[i] != guess[i]:
-                    match = False
-                elif symbol == "X" and (word[i] == guess[i] or guess[i] not in word):
-                    match = False
-                elif symbol == "-" and guess[i] in word:
-                    match = False
-                # Masked symbols (?) are ignored for now
-            if match:
-                temp_filtered_words.append(word)
-        filtered_words = temp_filtered_words
-
-    return filtered_words
-
-# Function to suggest the next best guess
+def match_eval(w_letter, g_letter, symbol):
+    if symbol == '-' and w_letter == g_letter:
+        return False
+    elif symbol == 'X' and w_letter == g_letter:
+        return False
+    elif symbol == 'O' and w_letter != g_letter:
+        return False
+    return True
 
 
-def suggest_next_guess(guess_history, evaluation_history):
-    # First guess is always a good word like "slate" if no history
+
+
+# get the next guess
+def get_next_guess(guess_history, eval_history):
     if not guess_history:
-        return "slate"
-
-    # Filter words based on previous feedback
-    possible_words = filter_words(WORD_LIST, guess_history, evaluation_history)
-
-    # Randomly select from the remaining valid words
-    return random.choice(possible_words) if possible_words else None
-
-# Define the /square route for evaluation
-
+        return initial_guess
+    possible_words = filter_words(guess_history, eval_history)
+    return possible_words[0] if possible_words else "error"
 
 @app.route('/wordle-game', methods=['POST'])
-def best_word():
-    # Get the data from the request
+def wordle_game():
     data = request.get_json()
-
-    logging.info("data sent for evaluation {}".format(data))
-
-    # Extract guessHistory and evaluationHistory
-    guess_history = data.get("guessHistory", [])
-    evaluation_history = data.get("evaluationHistory", [])
-
-    # Log guess history and evaluation history for debugging
-    logging.info("Guess history: {}".format(guess_history))
-    logging.info("Evaluation history: {}".format(evaluation_history))
-
-    # Suggest the next guess
-    next_guess = suggest_next_guess(guess_history, evaluation_history)
-
-    # Log the result
-    logging.info("My result (next guess): {}".format(next_guess))
-
-    # Return the next guess as a JSON response
-    return json.dumps({"guess": next_guess})
-
-
-# Running the server
-if __name__ == '__main__':
-    app.run(debug=True)
+    guess_history = data.get('guessHistory', [])
+    eval_history = data.get('evaluationHistory', [])
+    next_guess = get_next_guess(guess_history, eval_history)
+    return jsonify({"guess": next_guess})

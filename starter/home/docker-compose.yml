@@ -1,0 +1,11 @@
+services:
+  pwn:
+    container_name: challenge_starter
+    image: skysider/pwndocker
+    cap_add:
+      - SYS_PTRACE
+    ports:
+      - "23946:23946"
+    volumes:
+      - ../flag:/flag:ro
+      - ../home:/ctf/work
