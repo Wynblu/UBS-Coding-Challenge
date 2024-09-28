@@ -1,4 +1,3 @@
-from flask import jsonify
 import logging
 import json
 from flask import request
@@ -35,23 +34,26 @@ def calculate_efficiency(monster_counts):
 # Route to expose the POST endpoint for verification
 
 
-@app.route('/efficient-hunter-kazuma', methods=['POST'])
-def efficient_hunter_kazuma():
+@app.route('/efficient-hunter-kaszuma', methods=['POST'])
+def evaluate():
     # Parse the incoming request data
     data = request.get_json()
     logging.info(f"Data received for evaluation: {data}")
 
+    # Process the data
+    input_data = data.get("input", [])
+
     result = []
 
     # Loop over all sets of monster counts in the input
-    for entry in data:
-        monsters = entry["monsters"]
+    for entry in input_data:
+        monsters = entry.get("monsters", [])
         efficiency = calculate_efficiency(monsters)
         result.append({"efficiency": efficiency})
 
-    # Return the result as a JSON response
+    # Log and return the result as a JSON response
     logging.info(f"Result sent: {result}")
-    return jsonify(result)
+    return json.dumps(result)
 
 
 # Running the Flask app
