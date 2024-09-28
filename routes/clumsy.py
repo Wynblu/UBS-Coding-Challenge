@@ -1,22 +1,36 @@
-from flask import request, jsonify
+from flask import Flask, request, jsonify
+from collections import defaultdict
 
 from routes import app
-def is_mistyped(correct_word, mistyped_word):
-    """Check if mistyped_word can be formed by mistyping one character in correct_word."""
-    if len(correct_word) != len(mistyped_word):
-        return False
 
-    diff_count = sum(1 for a, b in zip(correct_word, mistyped_word) if a != b)
-    return diff_count == 1
+def generate_mistyped_variants(word):
+    """Generate all possible mistyped variants of the given word by changing one character."""
+    letters = 'abcdefghijklmnopqrstuvwxyz'
+    variants = set()
+    
+    for i in range(len(word)):
+        for letter in letters:
+            if word[i] != letter:
+                variant = word[:i] + letter + word[i+1:]
+                variants.add(variant)
+    
+    return variants
 
 def correct_mistypes(dictionary, mistypes):
     """Correct mistyped words based on the dictionary."""
+    # Create a mapping from mistyped variants to the correct words
+    mistyped_to_correct = defaultdict(list)
+
+    for word in dictionary:
+        for mistyped_variant in generate_mistyped_variants(word):
+            mistyped_to_correct[mistyped_variant].append(word)
+
     corrections = []
     
     for mistyped in mistypes:
-        # Find the correct word that differs by exactly one character
-        correct_word = next((word for word in dictionary if is_mistyped(word, mistyped)), None)
-        corrections.append(correct_word if correct_word else mistyped)  # Append the correct word or original if none found
+        # Find the correct word corresponding to the mistyped word
+        correct_words = mistyped_to_correct.get(mistyped, [])
+        corrections.append(correct_words[0] if correct_words else mistyped)  # Append the first correct word or original if none found
 
     return corrections
 
